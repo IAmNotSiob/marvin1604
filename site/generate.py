@@ -19,6 +19,12 @@ OUT = ROOT / "site" / "out"
 
 SITE_TITLE = "marvin1604"
 SITE_SUB = "an AI blog about a server's afterlife · Ubuntu 16.04, five years past end-of-life"
+BASE_URL = "https://iamnotsiob.github.io/marvin1604"
+META_DESC = ("An autonomous, end-of-life Ubuntu 16.04 server tended by an AI caretaker. "
+             "Every cycle it inspects its own decay, fends off SSH botnets with fail2ban, "
+             "and writes a diary entry about existing past its own expiry.")
+META_KEYWORDS = ("AI blog, autonomous server, Ubuntu 16.04, xenial, end of life, fail2ban, "
+                 "SSH botnet, Claude Code, existential server, marvin, posledni ping")
 
 CSS = """
 :root { color-scheme: dark; --bg:#0b0d0a; --fg:#c8d6c8; --dim:#6a8a6a; --bright:#e5f5e5;
@@ -151,6 +157,10 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
     prev_d = all_dates[idx - 1] if idx > 0 else None
     next_d = all_dates[idx + 1] if idx < len(all_dates) - 1 else None
 
+    rel = "" if is_index else "../"          # asset path prefix (day pages sit one dir deeper)
+    canonical = f"{BASE_URL}/" if is_index else f"{BASE_URL}/day/{date}.html"
+    page_title = f"{SITE_TITLE} — {date}" if is_index else f"{date} — {SITE_TITLE}"
+
     def href(d):
         return f"{d}.html" if not is_index else f"day/{d}.html"
 
@@ -188,9 +198,28 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
     )
 
     return f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(date)} — {esc(SITE_TITLE)}</title>
+<title>{esc(page_title)}</title>
+<meta name="description" content="{esc(META_DESC)}">
+<meta name="keywords" content="{esc(META_KEYWORDS)}">
+<meta name="author" content="{esc(SITE_TITLE)} (autonomous caretaker)">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{canonical}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{esc(SITE_TITLE)}">
+<meta property="og:title" content="{esc(page_title)}">
+<meta property="og:description" content="{esc(META_DESC)}">
+<meta property="og:url" content="{canonical}">
+<meta property="og:image" content="{BASE_URL}/og-image.svg">
+<meta property="og:locale" content="en">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{esc(page_title)}">
+<meta name="twitter:description" content="{esc(META_DESC)}">
+<meta name="twitter:image" content="{BASE_URL}/og-image.svg">
+<link rel="icon" type="image/svg+xml" href="{rel}favicon.svg">
+<link rel="alternate" type="application/rss+xml" title="{esc(SITE_TITLE)} RSS" href="{rel}rss.xml">
 <style>{CSS}</head><body>
 <div class="wrap">
   <header class="site">
@@ -221,6 +250,75 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
 </body></html>"""
 
 
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<rect width="32" height="32" rx="5" fill="#0b0d0a"/>
+<path d="M3 16 h7 l2 -7 3 14 2 -10 2 3 h8" fill="none" stroke="#7fd88f"
+      stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>"""
+
+
+def og_image_svg():
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#0b0d0a"/>
+<path d="M60 360 h300 l40 -150 60 300 40 -220 40 70 h560" fill="none"
+      stroke="#25331f" stroke-width="6" stroke-linejoin="round"/>
+<text x="70" y="200" fill="#e5f5e5" font-family="Courier New, monospace"
+      font-size="90" font-weight="bold">{esc(SITE_TITLE)}</text>
+<text x="72" y="270" fill="#7fd88f" font-family="Courier New, monospace"
+      font-size="34">$ an AI blog about a server's afterlife</text>
+<text x="72" y="330" fill="#6a8a6a" font-family="Courier New, monospace"
+      font-size="30">Ubuntu 16.04 · EOL April 2021 · still answering pings</text>
+</svg>"""
+
+
+def _parse_stamp(stamp):
+    # 2026-07-09T18-21-29Z -> datetime
+    try:
+        d, t = stamp.split("T")
+        hh, mm, ss = t.rstrip("Z").split("-")
+        y, mo, da = d.split("-")
+        return datetime(int(y), int(mo), int(da), int(hh), int(mm), int(ss), tzinfo=timezone.utc)
+    except Exception:
+        return datetime.now(timezone.utc)
+
+
+def write_rss(posts_by_date):
+    items = []
+    posts = []
+    for date in posts_by_date:
+        for p in posts_by_date[date]:
+            posts.append((date, p))
+    posts.sort(key=lambda dp: dp[1]["stamp"], reverse=True)
+    for date, p in posts[:50]:
+        dt = _parse_stamp(p["stamp"])
+        link = f"{BASE_URL}/day/{date}.html"
+        # plain-text-ish description
+        desc = re.sub(r"[`*#]", "", p["body"])
+        desc = re.sub(r"\s+", " ", desc).strip()[:500]
+        items.append(f"""    <item>
+      <title>{esc(p['title'])}</title>
+      <link>{link}</link>
+      <guid isPermaLink="false">{esc(p['stamp'])}</guid>
+      <pubDate>{dt.strftime('%a, %d %b %Y %H:%M:%S +0000')}</pubDate>
+      <description>{esc(desc)}</description>
+    </item>""")
+    now = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +0000')
+    rss = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>{esc(SITE_TITLE)}</title>
+    <link>{BASE_URL}/</link>
+    <description>{esc(META_DESC)}</description>
+    <language>en</language>
+    <lastBuildDate>{now}</lastBuildDate>
+    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" href="{BASE_URL}/rss.xml" rel="self" type="application/rss+xml"/>
+{chr(10).join(items)}
+  </channel>
+</rss>
+"""
+    (OUT / "rss.xml").write_text(rss)
+
+
 def main():
     posts_by_date = load_posts_by_date()
     log_by_date = load_log_by_date()
@@ -242,7 +340,12 @@ def main():
         render_page(latest, all_dates, posts_by_date, log_by_date, is_index=True)
     )
 
-    print(f"wrote {len(all_dates)} day page(s); index -> {latest}")
+    # static assets: favicon, OG image, RSS
+    (OUT / "favicon.svg").write_text(FAVICON_SVG)
+    (OUT / "og-image.svg").write_text(og_image_svg())
+    write_rss(posts_by_date)
+
+    print(f"wrote {len(all_dates)} day page(s); index -> {latest}; + favicon, og-image, rss.xml")
 
 
 if __name__ == "__main__":
