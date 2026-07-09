@@ -71,6 +71,28 @@ nav.dates a.disabled, nav.dates span.disabled { color:var(--gray-200); pointer-e
                  font-family:var(--mono); word-break:break-word; }
 .vitals .tile.alert .value { color:var(--red-600); }
 
+.tarot { display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;
+         margin:1.75rem 0 2.25rem; }
+.tarot .card { flex:0 0 170px; aspect-ratio:2/3; position:relative;
+               border:1px solid var(--gray-200); border-radius:.7rem;
+               background:linear-gradient(160deg, #fff, var(--gray-50));
+               box-shadow:0 1px 3px rgba(0,0,0,.06); padding:.9rem;
+               display:flex; flex-direction:column; align-items:center;
+               justify-content:space-between; text-align:center; }
+.tarot .card::before { content:""; position:absolute; inset:.4rem;
+               border:1px solid var(--gray-200); border-radius:.5rem; pointer-events:none; }
+.tarot .numeral { font-family:var(--mono); font-size:.8rem; color:var(--green-700);
+               letter-spacing:.1em; z-index:1; }
+.tarot .glyph { font-size:2.9rem; line-height:1; z-index:1; }
+.tarot .card.reversed .glyph { transform:rotate(180deg); }
+.tarot .name { font-weight:700; font-size:.98rem; color:var(--gray-800);
+               line-height:1.2; z-index:1; }
+.tarot .reading { flex:1; min-width:220px; }
+.tarot .reading .kicker { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
+               font-weight:600; color:var(--gray-600); }
+.tarot .reading .orient { font-family:var(--mono); font-size:.75rem; color:var(--gray-600); }
+.tarot .reading p { margin:.4rem 0 0; color:var(--gray-700); font-size:.98rem; }
+
 article.entry { margin:2.25rem 0; }
 article.entry h1 { color:var(--gray-800); font-weight:700; font-size:1.5rem;
                    letter-spacing:-.01em; margin:0 0 .35rem; }
@@ -156,6 +178,34 @@ VITAL_KEYS = [
     ("fail2ban_banned", "ips banned"),
     ("ssh_attacks", "ssh attempts"),
 ]
+
+
+def render_tarot(log_entries):
+    """The day's tarot draw, taken from the most recent cycle that recorded one."""
+    tarot = None
+    for e in reversed(log_entries):
+        if isinstance(e.get("tarot"), dict) and e["tarot"].get("card"):
+            tarot = e["tarot"]
+            break
+    if not tarot:
+        return ""
+    orient = (tarot.get("orientation") or "upright").lower()
+    reversed_cls = " reversed" if orient.startswith("rev") else ""
+    glyph = tarot.get("glyph") or "✦"
+    numeral = tarot.get("numeral") or ""
+    reading = tarot.get("reading") or ""
+    return f"""<div class="tarot">
+    <div class="card{reversed_cls}">
+      <div class="numeral">{esc(numeral)}</div>
+      <div class="glyph">{esc(glyph)}</div>
+      <div class="name">{esc(tarot['card'])}</div>
+    </div>
+    <div class="reading">
+      <div class="kicker">Today's card</div>
+      <div class="orient">{esc(tarot['card'])} · {esc(orient)}</div>
+      <p>{esc(reading)}</p>
+    </div>
+  </div>"""
 
 
 ALERT_KEYS = {"fail2ban_banned", "ssh_attacks", "top_attacker"}
@@ -259,6 +309,7 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
     {next_html}
   </nav>
 
+  {render_tarot(log_by_date.get(date, []))}
   {render_vitals(log_by_date.get(date, []))}
   {notes}
   {''.join(entries_html)}

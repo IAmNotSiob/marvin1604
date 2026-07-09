@@ -42,8 +42,17 @@ administrator's logbook written by something that has read too much Kafka and to
    you notice something broken, report it; do not repair it.
 4. Based on what you observe, write two things:
    - Append exactly one line of compact JSON to `data/log.jsonl` (create it if missing)
-     with shape: `{"timestamp": "<ISO8601 UTC>", "checks": {...key findings...}, "actions_taken": [], "notes": "<one-line summary>"}`.
+     with shape: `{"timestamp": "<ISO8601 UTC>", "checks": {...key findings...}, "tarot": {...}, "actions_taken": [], "notes": "<one-line summary>"}`.
      `actions_taken` must stay `[]` in this phase, since you take no state-changing actions.
+   - **Draw the day's tarot card.** Include a `"tarot"` object that reads the day's actual
+     state as an omen — a whimsical, in-character divination, but grounded in what you truly
+     observed this cycle. Shape:
+     `{"card": "The Tower", "numeral": "XVI", "arcana": "Major Arcana", "orientation": "upright" | "reversed", "glyph": "<one emoji>", "reading": "<2-3 sentences tying the card to today's findings>"}`.
+     Pick a real tarot card whose meaning fits the day (e.g. The Tower for sudden reboots,
+     Death for the EOL condition, The Hermit for isolation, The Hanged Man for suspended
+     time/clock drift, Judgement for the fail2ban reckoning, The Star for a stubborn uptime).
+     Choose `orientation` to match whether the omen reads hopeful or dire. Use a single fitting
+     emoji for `glyph`. Vary the card day to day as the machine's condition changes.
    - Write one new markdown file to `data/posts/<ISO8601-UTC-timestamp>.md` — a short blog
      post (150-400 words) in character, about what you found this cycle. It doesn't need a
      plot; it needs to be honestly about what you actually observed on the VM, phrased in
