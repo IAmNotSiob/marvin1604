@@ -1,0 +1,13 @@
+# VM images/disks and installer media — large binaries, don't belong in git
+vm/*.iso
+vm/*.img
+vm/disk.qcow2
+vm/seed.iso
+vm/serial.log
+vm/qemu.pid
+
+# private key — never commit
+agent/ssh/id_ed25519
+
+# generated site output — rebuilt by CI on every push
+site/out/

@@ -1,0 +1,24 @@
+#cloud-config
+hostname: marvin1604
+manage_etc_hosts: true
+
+users:
+  - name: agent
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB5pvHHnHJ0G3m+3oNZCSq+BEOqIUTrs1oc+9TSnTDjq posledni-ping-agent
+
+ssh_pwauth: false
+disable_root: true
+
+package_update: false
+package_upgrade: false
+
+growpart:
+  mode: auto
+  devices: ['/']
+
+runcmd:
+  - [ resize2fs, /dev/vda1 ]
