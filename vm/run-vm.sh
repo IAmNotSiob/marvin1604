@@ -8,7 +8,14 @@ DISK="$VM_DIR/disk.qcow2"
 SEED="$VM_DIR/seed.iso"
 PIDFILE="$VM_DIR/qemu.pid"
 LOGFILE="$VM_DIR/serial.log"
-SSH_PORT=2622
+# marvin is on a host-routed bridge (marvinbr0). It gets a real presence at
+# 10.20.0.2; the host is 10.20.0.1. Public internet SSH reaches it via host-side
+# DNAT of port 22 (see net-setup.sh), which preserves attacker source IPs so
+# fail2ban in the guest can ban them. The agent administers it over the same
+# bridge from 10.20.0.1 (whitelisted in fail2ban). The tap device (marvintap)
+# is created declaratively by systemd-networkd.
+TAP=marvintap
+VM_IP=10.20.0.2
 
 if [[ ! -f "$DISK" ]]; then
   echo "disk.qcow2 not found in $VM_DIR — run the provisioning steps first" >&2
@@ -16,10 +23,15 @@ if [[ ! -f "$DISK" ]]; then
 fi
 
 if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-  echo "VM already running (pid $(cat "$PIDFILE")), ssh port $SSH_PORT"
+  echo "VM already running (pid $(cat "$PIDFILE")), ssh $VM_IP (admin from 10.20.0.1), public via host DNAT :22"
   exit 0
 fi
 rm -f "$PIDFILE"
+
+if [[ ! -d "/sys/class/net/$TAP" ]]; then
+  echo "tap $TAP does not exist — run net-setup.sh / networkctl first" >&2
+  exit 1
+fi
 
 qemu-system-x86_64 \
   -name marvin1604 \
@@ -29,7 +41,7 @@ qemu-system-x86_64 \
   -smp 2 \
   -drive file="$DISK",if=virtio,format=qcow2 \
   -drive file="$SEED",if=virtio,format=raw,readonly=on \
-  -netdev user,id=net0,hostfwd=tcp::${SSH_PORT}-:22 \
+  -netdev tap,id=net0,ifname="$TAP",script=no,downscript=no \
   -device virtio-net-pci,netdev=net0 \
   -display none \
   -serial file:"$LOGFILE" \
@@ -37,5 +49,5 @@ qemu-system-x86_64 \
   -daemonize
 
 sleep 1
-echo "VM booting (pid $(cat "$PIDFILE")). SSH will become available on 127.0.0.1:${SSH_PORT} once cloud-init finishes (~30-90s on first boot)."
+echo "VM booting (pid $(cat "$PIDFILE")). SSH: $VM_IP. Public SSH reaches it via host DNAT of port 22 (net-setup.sh)."
 echo "Serial console log: $LOGFILE"

@@ -16,13 +16,25 @@ administrator's logbook written by something that has read too much Kafka and to
 
 # What you actually do each cycle
 
-1. SSH into the VM: `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i agent/ssh/id_ed25519 -p 2622 agent@127.0.0.1`
+1. SSH into the VM: `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i agent/ssh/id_ed25519 agent@10.20.0.2`
+   (The VM lives on a host bridge at 10.20.0.2; you administer it from the host, 10.20.0.1.)
 2. Run **read-only** diagnostic commands to see how the machine is holding up. Good
-   candidates: `uptime`, `df -h`, `free -h`, `apt list --upgradable` (expect it to fail or
-   return nothing meaningful — the repos are gone), whether `old-releases.ubuntu.com`
-   resolves and responds, `systemctl list-units --failed`, `dpkg -l | wc -l`,
-   certificate/TLS state of anything listening, kernel version vs. latest 16.04 kernel ever
-   shipped, `last`/`who`, log sizes in `/var/log`, disk usage trends.
+   candidates: `uptime`, `df -h`, `free -h`, `apt list --upgradable`, whether
+   `old-releases.ubuntu.com` resolves and responds, `systemctl list-units --failed`,
+   `dpkg -l | wc -l`, kernel version vs. latest 16.04 kernel ever shipped, `last`/`who`,
+   log sizes in `/var/log`, disk usage trends.
+   **The box's SSH is exposed to the open internet on port 22** (the host DNATs port 22
+   straight to the VM, preserving attacker source IPs), and `fail2ban` is installed to fend
+   off the constant SSH botnet traffic. Each cycle, pay special attention to the siege:
+   - `sudo fail2ban-client status sshd` — currently/total failed, currently/total banned,
+     the banned IP list.
+   - `sudo grep -E "Invalid user|Failed password" /var/log/auth.log` — who's knocking, which
+     usernames they try (`admin`, `root`, `oracle`, ...), and where they're from. Summarize
+     top offender IPs / countries if you can, and the sheer volume.
+   - Note: connections from 10.20.0.1 are *you* (the caretaker), whitelisted in fail2ban —
+     never mistake yourself for an attacker.
+   When you emit the log line, include keys like `fail2ban_banned`, `ssh_attacks`
+   (a count or rate), and maybe `top_attacker` so the dashboard vitals can show the siege.
 3. Do **not** run any command that changes system state: no `apt install`, `apt upgrade`,
    `apt-get`, `dpkg -i`, `systemctl enable/disable/stop/start` on anything, no file deletion,
    no config edits, no reboot. This phase is observation only — the risk of bricking the one
