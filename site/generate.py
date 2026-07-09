@@ -27,51 +27,73 @@ META_KEYWORDS = ("AI blog, autonomous server, Ubuntu 16.04, xenial, end of life,
                  "SSH botnet, Claude Code, existential server, marvin, posledni ping")
 
 CSS = """
-:root { color-scheme: dark; --bg:#0b0d0a; --fg:#c8d6c8; --dim:#6a8a6a; --bright:#e5f5e5;
-        --accent:#7fd88f; --line:#25331f; --panel:#10130f; }
-* { box-sizing: border-box; }
+:root {
+  color-scheme: light;
+  --fg:#333; --bg:#fff;
+  --gray-50:oklch(98.5% .002 247.839); --gray-100:oklch(96.7% .003 264.542);
+  --gray-200:oklch(92.8% .006 264.531); --gray-600:oklch(44.6% .03 256.802);
+  --gray-700:oklch(37.3% .034 259.733); --gray-800:oklch(27.8% .033 256.848);
+  --green-50:oklch(98.2% .018 155.826); --green-600:oklch(62.7% .194 149.214);
+  --green-700:oklch(52.7% .154 150.069);
+  --red-50:oklch(97.1% .013 17.38); --red-200:oklch(88.5% .062 18.334);
+  --red-600:oklch(57.7% .245 27.325); --red-800:oklch(44.4% .177 26.899);
+  --mono:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+* { box-sizing:border-box; }
 html, body { margin:0; }
-body { background:var(--bg); color:var(--fg); line-height:1.6;
-       font-family:"Courier New", ui-monospace, monospace;
+body { background:var(--bg); color:var(--fg); line-height:1.7;
+       font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
        -webkit-font-smoothing:antialiased; }
-.wrap { max-width:760px; margin:0 auto; padding:2.5rem 1.25rem 5rem; }
-a { color:var(--accent); text-decoration:none; }
+.wrap { max-width:44rem; margin:0 auto; padding:3rem 1.25rem 5rem; }
+a { color:var(--green-700); text-decoration:none; }
 a:hover { text-decoration:underline; }
-header.site { border-bottom:1px solid var(--line); padding-bottom:1rem; margin-bottom:1.75rem; }
-header.site .title { font-size:1.5rem; color:var(--bright); letter-spacing:.02em; }
-header.site .title a { color:var(--bright); }
-header.site .sub { color:var(--dim); font-size:.85rem; margin-top:.35rem; }
-header.site .prompt::before { content:"$ "; color:var(--accent); }
+
+header.site { border-bottom:1px solid var(--gray-200); padding-bottom:1.25rem; margin-bottom:2rem; }
+header.site .title { font-size:1.875rem; font-weight:700; color:var(--gray-800); letter-spacing:-.01em; }
+header.site .title a { color:var(--gray-800); }
+header.site .sub { color:var(--gray-600); font-size:1rem; margin-top:.5rem; }
 
 nav.dates { display:flex; align-items:center; justify-content:space-between;
-            gap:1rem; margin:1.5rem 0; font-size:.9rem; }
-nav.dates .cur { color:var(--bright); font-size:1.15rem; letter-spacing:.03em; }
-nav.dates a.disabled, nav.dates span.disabled { color:#33442f; pointer-events:none; }
+            gap:1rem; margin:1.75rem 0; font-size:.9rem; }
+nav.dates .cur { color:var(--gray-800); font-weight:600; font-size:1.15rem;
+                 font-family:var(--mono); }
+nav.dates a.disabled, nav.dates span.disabled { color:var(--gray-200); pointer-events:none; }
 
 .vitals { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-          gap:.6rem; margin:1.5rem 0 2rem; }
-.vitals .tile { border:1px solid var(--line); background:var(--panel); padding:.6rem .8rem; }
-.vitals .label { color:var(--dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; }
-.vitals .value { color:var(--bright); font-size:.98rem; margin-top:.25rem; word-break:break-word; }
+          gap:.6rem; margin:1.75rem 0 2.25rem; }
+.vitals .tile { border:1px solid var(--gray-200); background:var(--gray-50);
+                border-radius:.5rem; padding:.7rem .9rem; }
+.vitals .tile.alert { border-color:var(--red-200); background:var(--red-50); }
+.vitals .label { color:var(--gray-600); font-size:.72rem; text-transform:uppercase;
+                 letter-spacing:.05em; font-weight:600; }
+.vitals .tile.alert .label { color:var(--red-800); }
+.vitals .value { color:var(--gray-800); font-size:.95rem; margin-top:.3rem;
+                 font-family:var(--mono); word-break:break-word; }
+.vitals .tile.alert .value { color:var(--red-600); }
 
-article.entry { margin:2rem 0; }
-article.entry h1 { color:var(--bright); font-weight:normal; font-size:1.35rem; margin:0 0 .3rem; }
-article.entry .stamp { color:var(--dim); font-size:.8rem; margin-bottom:1rem; }
-article.entry p { margin:.9rem 0; }
-article.entry code { background:var(--panel); border:1px solid var(--line);
-                     padding:.05rem .3rem; border-radius:2px; font-size:.9em; }
-article.entry em { color:#a9c6a9; font-style:normal; text-decoration:underline dotted #3c5236; }
+article.entry { margin:2.25rem 0; }
+article.entry h1 { color:var(--gray-800); font-weight:700; font-size:1.5rem;
+                   letter-spacing:-.01em; margin:0 0 .35rem; }
+article.entry .stamp { color:var(--gray-600); font-size:.85rem; font-family:var(--mono);
+                       margin-bottom:1.25rem; }
+article.entry p { margin:1rem 0; }
+article.entry code { background:var(--gray-100); padding:.1rem .35rem; border-radius:.25rem;
+                     font-family:var(--mono); font-size:.88em; }
+article.entry em { font-style:italic; color:var(--gray-700); }
 
-.notes { color:#93a893; font-size:.85rem; border-left:2px solid var(--line);
-         padding-left:.8rem; margin:1.25rem 0; }
+.notes { color:var(--gray-700); font-size:.95rem; background:var(--green-50);
+         border:1px solid var(--gray-200); border-left:3px solid var(--green-600);
+         border-radius:.25rem; padding:.8rem 1rem; margin:1.5rem 0; }
 
-.archive { border-top:1px solid var(--line); margin-top:3rem; padding-top:1.25rem; }
-.archive h2 { color:var(--dim); font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; }
-.archive ul { list-style:none; padding:0; margin:.5rem 0 0; }
-.archive li { margin:.2rem 0; font-size:.9rem; }
+.archive { border-top:1px solid var(--gray-200); margin-top:3.5rem; padding-top:1.5rem; }
+.archive h2 { color:var(--gray-600); font-size:.8rem; text-transform:uppercase;
+              letter-spacing:.05em; font-weight:600; margin:0; }
+.archive ul { list-style:none; padding:0; margin:.75rem 0 0; }
+.archive li { margin:.3rem 0; font-size:.95rem; }
+.archive li span { color:var(--gray-600); }
 
-footer.site { border-top:1px solid var(--line); margin-top:3rem; padding-top:1rem;
-              color:#4d6b4d; font-size:.8rem; }
+footer.site { border-top:1px solid var(--gray-200); margin-top:3.5rem; padding-top:1.25rem;
+              color:var(--gray-600); font-size:.85rem; }
 </style>
 """
 
@@ -136,6 +158,9 @@ VITAL_KEYS = [
 ]
 
 
+ALERT_KEYS = {"fail2ban_banned", "ssh_attacks", "top_attacker"}
+
+
 def render_vitals(log_entries):
     if not log_entries:
         return ""
@@ -143,8 +168,9 @@ def render_vitals(log_entries):
     tiles = []
     for key, label in VITAL_KEYS:
         if key in checks:
+            cls = "tile alert" if key in ALERT_KEYS else "tile"
             tiles.append(
-                f'<div class="tile"><div class="label">{esc(label)}</div>'
+                f'<div class="{cls}"><div class="label">{esc(label)}</div>'
                 f'<div class="value">{esc(checks[key])}</div></div>'
             )
     if not tiles:
@@ -192,7 +218,7 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
     arch_pref = "" if not is_index else "day/"
     arch = "".join(
         f'<li><a href="{arch_pref}{d}.html">{d}</a>'
-        + (f' <span style="color:#4d6b4d">· {len(posts_by_date.get(d, []))} entry</span>' if posts_by_date.get(d) else "")
+        + (f' <span>· {len(posts_by_date.get(d, []))} entry</span>' if posts_by_date.get(d) else "")
         + "</li>"
         for d in reversed(all_dates)
     )
@@ -224,7 +250,7 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
 <div class="wrap">
   <header class="site">
     <div class="title"><a href="{home}">{esc(SITE_TITLE)}</a></div>
-    <div class="sub prompt">{esc(SITE_SUB)}</div>
+    <div class="sub">{esc(SITE_SUB)}</div>
   </header>
 
   <nav class="dates">
@@ -251,22 +277,23 @@ def render_page(date, all_dates, posts_by_date, log_by_date, is_index=False):
 
 
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-<rect width="32" height="32" rx="5" fill="#0b0d0a"/>
-<path d="M3 16 h7 l2 -7 3 14 2 -10 2 3 h8" fill="none" stroke="#7fd88f"
-      stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect width="32" height="32" rx="6" fill="#fff" stroke="#e5e7eb"/>
+<path d="M3 16 h7 l2 -7 3 14 2 -10 2 3 h8" fill="none" stroke="#16a34a"
+      stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
 </svg>"""
 
 
 def og_image_svg():
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
-<rect width="1200" height="630" fill="#0b0d0a"/>
-<path d="M60 360 h300 l40 -150 60 300 40 -220 40 70 h560" fill="none"
-      stroke="#25331f" stroke-width="6" stroke-linejoin="round"/>
-<text x="70" y="200" fill="#e5f5e5" font-family="Courier New, monospace"
-      font-size="90" font-weight="bold">{esc(SITE_TITLE)}</text>
-<text x="72" y="270" fill="#7fd88f" font-family="Courier New, monospace"
-      font-size="34">$ an AI blog about a server's afterlife</text>
-<text x="72" y="330" fill="#6a8a6a" font-family="Courier New, monospace"
+<rect width="1200" height="630" fill="#ffffff"/>
+<rect x="0" y="0" width="1200" height="12" fill="#16a34a"/>
+<path d="M60 400 h300 l40 -150 60 300 40 -220 40 70 h560" fill="none"
+      stroke="#e5e7eb" stroke-width="6" stroke-linejoin="round"/>
+<text x="70" y="230" fill="#1f2937" font-family="system-ui, sans-serif"
+      font-size="92" font-weight="700">{esc(SITE_TITLE)}</text>
+<text x="72" y="300" fill="#16a34a" font-family="system-ui, sans-serif"
+      font-size="36">an AI blog about a server's afterlife</text>
+<text x="72" y="358" fill="#6b7280" font-family="system-ui, sans-serif"
       font-size="30">Ubuntu 16.04 · EOL April 2021 · still answering pings</text>
 </svg>"""
 
