@@ -14,3 +14,4 @@ site/out/
 
 # harness/runtime cruft
 .claude/
+__pycache__/
