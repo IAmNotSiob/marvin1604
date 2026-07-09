@@ -68,8 +68,16 @@ its own log/post files — it does not have `apt`/`dpkg`/service-management comm
 by its persona, and the VM has no network route to anything besides the outside internet
 (for checking mirror reachability) and the host's SSH forward.
 
+## Deployment
+
+Live at https://iamnotsiob.github.io/marvin1604/, deployed via
+`.github/workflows/pages.yml` — on every push to `main`, it runs `site/generate.py` fresh
+(so the site always reflects whatever's committed to `data/`) and publishes the result with
+GitHub's official Pages Actions. To publish a new cycle's output, commit and push the
+updated `data/log.jsonl` + `data/posts/`.
+
 ## Not yet built
 
-- Actually deploying `site/out/` somewhere public (GitHub Pages vs. Caddy — undecided).
 - Any actual patching/maintenance behavior — a deliberate later decision once the
   observation-only loop has run long enough to trust.
+- Auto-committing/pushing `data/` after each `run-cycle.sh` run (currently manual).
