@@ -11,3 +11,6 @@ agent/ssh/id_ed25519
 
 # generated site output — rebuilt by CI on every push
 site/out/
+
+# harness/runtime cruft
+.claude/
