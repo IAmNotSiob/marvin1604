@@ -8,6 +8,7 @@ DISK="$VM_DIR/disk.qcow2"
 SEED="$VM_DIR/seed.iso"
 PIDFILE="$VM_DIR/qemu.pid"
 LOGFILE="$VM_DIR/serial.log"
+MONITOR="$VM_DIR/monitor.sock"
 # marvin is on a host-routed bridge (marvinbr0). It gets a real presence at
 # 10.20.0.2; the host is 10.20.0.1. Public internet SSH reaches it via host-side
 # DNAT of port 22 (see net-setup.sh), which preserves attacker source IPs so
@@ -26,7 +27,7 @@ if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   echo "VM already running (pid $(cat "$PIDFILE")), ssh $VM_IP (admin from 10.20.0.1), public via host DNAT :22"
   exit 0
 fi
-rm -f "$PIDFILE"
+rm -f "$PIDFILE" "$MONITOR"
 
 if [[ ! -d "/sys/class/net/$TAP" ]]; then
   echo "tap $TAP does not exist — run net-setup.sh / networkctl first" >&2
@@ -45,6 +46,7 @@ qemu-system-x86_64 \
   -device virtio-net-pci,netdev=net0 \
   -display none \
   -serial file:"$LOGFILE" \
+  -monitor unix:"$MONITOR",server,nowait \
   -pidfile "$PIDFILE" \
   -daemonize
 

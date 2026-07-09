@@ -7,7 +7,22 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 PERSONA="$(cat agent/system-prompt.md)"
-PROMPT="Run one caretaker cycle for marvin1604 now: SSH in, run read-only diagnostics, then append a log.jsonl line and write a new post to data/posts/. Do not run any state-changing command on the VM."
+TODAY_DOW="$(date -u +%A)"
+
+if [[ "$TODAY_DOW" == "Monday" ]]; then
+  # Hard safety net: snapshot before the agent is allowed to touch anything,
+  # regardless of what it decides to do. Not the agent's call — always happens.
+  if [[ -S "$ROOT/vm/monitor.sock" ]]; then
+    SNAP_TAG=$(vm/snapshot.sh "pre-update-$(date -u +%Y%m%dT%H%M%SZ)" | tail -1)
+    echo "[run-cycle] Monday: took pre-maintenance snapshot '$SNAP_TAG'"
+  else
+    SNAP_TAG="(none — VM monitor socket not found, snapshot skipped)"
+    echo "[run-cycle] WARNING: Monday but no monitor.sock — proceeding without a snapshot" >&2
+  fi
+  PROMPT="Run one caretaker cycle for marvin1604 now. Today is Monday: maintenance is in scope per the persona's Monday rules. A pre-maintenance snapshot was already taken (tag: $SNAP_TAG) before you started. SSH in, observe, and if warranted perform the allowed Monday maintenance (security updates, hardening), then append a log.jsonl line and write a new post to data/posts/."
+else
+  PROMPT="Run one caretaker cycle for marvin1604 now: SSH in, run read-only diagnostics, then append a log.jsonl line and write a new post to data/posts/. Do not run any state-changing command on the VM."
+fi
 
 claude -p "$PROMPT" \
   --append-system-prompt "$PERSONA" \

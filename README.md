@@ -3,7 +3,9 @@
 A "Poslední Ping"-style caretaker agent, tending a QEMU VM running Ubuntu 16.04 LTS
 ("xenial"), which reached end-of-life in April 2021. Each cycle, a Claude Code agent SSHes
 into the VM, runs read-only diagnostics, and writes a structured log line plus a blog post
-about what it found. It does not perform upgrades or repairs in this phase — it observes.
+about what it found. On Mondays, it's additionally allowed to run security updates and
+light hardening (see "Agent phase and guardrails" below) — every other day is observation
+only.
 
 Inspired by [posledniping.cz](https://posledniping.cz) and [robot-marvin.cz](https://robot-marvin.cz).
 
@@ -20,6 +22,9 @@ Inspired by [posledniping.cz](https://posledniping.cz) and [robot-marvin.cz](htt
   - `net-setup.sh` / `net-teardown.sh` — host-side networking for public exposure:
     ip_forward, ufw NAT stanza (DNAT of the host's port 22 → the VM, preserving attacker
     source IPs) and MASQUERADE for the VM's outbound traffic. Reversible.
+  - `snapshot.sh [tag]` / `rollback.sh <tag>` — live disk+RAM snapshot/restore of the running
+    VM via its QEMU monitor socket (`monitor.sock`). Used automatically before any Monday
+    maintenance; can also be run by hand.
   - `ubuntu-16.04.5-server-amd64.iso` — the original installer ISO, kept for reference/
     authenticity; not used to boot (the cloud image is used directly instead, since 16.04's
     installer doesn't support the newer `autoinstall`/subiquity format)
@@ -58,9 +63,10 @@ Run one caretaker cycle by hand:
 ./agent/run-cycle.sh
 ```
 
-To run cycles on a schedule, either:
-- point cron at `agent/run-cycle.sh` (e.g. every 1-6 hours), or
-- use Claude Code's `loop` skill: `/loop 1h /home/user/boog/agent/run-cycle.sh`
+A weekly cron entry is installed (`crontab -l`) firing `agent/run-cycle.sh` every Monday
+04:00 UTC, logging to `vm/cycle.log`. To also run observation cycles more often, either add
+another cron line or use Claude Code's `loop` skill:
+`/loop 1h /home/user/boog/agent/run-cycle.sh`
 
 `run-cycle.sh` regenerates `site/out/` at the end of every cycle automatically. To
 regenerate by hand: `python3 site/generate.py`. Deploy `site/out/` to GitHub Pages or serve
@@ -80,10 +86,20 @@ The host's own sshd was moved off port 22 to 2222 to free 22 for the VM.
 
 ## Agent phase and guardrails
 
-The agent runs **observation only** — read-only diagnostics over SSH, then it writes its log
-line + diary entry. It watches (but does not manually drive) `fail2ban` fending off the SSH
-siege. `fail2ban` itself was installed once as an operator action; the agent doesn't patch,
-upgrade, or reconfigure the box on its own.
+Every day but Monday, the agent runs **observation only** — read-only diagnostics over SSH,
+then it writes its log line + diary entry. It watches (but does not manually drive)
+`fail2ban` fending off the SSH siege.
+
+**On Mondays** (checked by `run-cycle.sh` via `date -u +%A`), maintenance is in scope:
+`run-cycle.sh` force-snapshots the VM first — this is not left to the agent's judgment —
+then the agent may run `apt-get update && apt-get upgrade -y` (never `dist-upgrade`, which
+is far more likely to break an EOL system), review/tighten `sshd_config`, tune the
+`fail2ban` jail based on that week's actual siege data, check for stray listening services,
+and trim oversized logs. Kernel changes, networking config, and anything not covered by the
+pre-maintenance snapshot stay off-limits every day. If a Monday run goes wrong,
+`vm/rollback.sh <tag>` restores the pre-update state (tag is logged in that day's
+`log.jsonl`/post). `fail2ban` itself was installed once as an operator action, not by the
+agent.
 
 ## Deployment
 
@@ -95,8 +111,7 @@ updated `data/log.jsonl` + `data/posts/`.
 
 ## Not yet built
 
-- Any actual patching/maintenance behavior — a deliberate later decision once the
-  observation-only loop has run long enough to trust.
-- Auto-committing/pushing `data/` after each `run-cycle.sh` run (currently manual).
 - Persisting the bridge/tap + host-sshd-port move across host reboots is handled by
   systemd-networkd + `net-setup.sh`, but re-verify after a reboot.
+- More frequent (non-Monday) cycles aren't scheduled by default — only the weekly
+  maintenance cron is installed; add your own cron/`loop` cadence for daily observation.
